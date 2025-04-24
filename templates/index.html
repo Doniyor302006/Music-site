@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Musiqa Dunyosi</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --text: #222;
+            --card: #fff;
+        }
+
+        body.dark {
+            --bg: #121212;
+            --text: #eee;
+            --card: #1f1f1f;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        form, .post {
+            background: var(--card);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        input[type="text"], textarea, input[type="password"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        img, video, audio {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .toggle-theme {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #222;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+    </style>
+</head>
+<body>
+    <button class="toggle-theme" onclick="toggleTheme()">Rejim</button>
+
+    <div class="container">
+        <h1>Post Yuklash</h1>
+
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <input type="text" name="title" placeholder="Sarlavha" required>
+            <textarea name="description" placeholder="Izoh" required></textarea>
+            <input type="file" name="file" required>
+            <input type="password" name="password" placeholder="Parol" required>
+            <button type="submit">Yuklash</button>
+        </form>
+
+        {% for post in posts %}
+        <div class="post">
+            <h2>{{ post.title }}</h2>
+            <p>{{ post.description }}</p>
+
+            {% if post.file.endswith('.mp3') %}
+                <audio controls src="{{ post.file }}"></audio>
+            {% elif post.file.endswith('.mp4') %}
+                <video controls src="{{ post.file }}"></video>
+            {% elif post.file.endswith('.jpg') or post.file.endswith('.jpeg') or post.file.endswith('.png') %}
+                <img src="{{ post.file }}">
+            {% endif %}
+
+            <form onsubmit="likePost({{ loop.index0 }}); return false;">
+                <button type="submit">Layk</button>
+                <span id="like-count-{{ loop.index0 }}">{{ likes.get(loop.index0, 0) }}</span>
+            </form>
+
+            <form action="/comment/{{ loop.index0 }}" method="POST">
+                <input type="text" name="comment" placeholder="Fikr yozing..." required>
+                <button type="submit">Komment</button>
+            </form>
+            <ul>
+                {% for comment in comments.get(loop.index0, []) %}
+                <li>{{ comment }}</li>
+                {% endfor %}
+            </ul>
+
+            <form action="/delete/{{ loop.index0 }}" method="POST">
+                <input type="password" name="password" placeholder="Admin parol" required>
+                <button type="submit">O‘chirish</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function likePost(postId) {
+            fetch('/like/' + postId, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('like-count-' + postId).innerText = data.likes;
+            });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+        }
+    </script>
+</body>
+</html>
